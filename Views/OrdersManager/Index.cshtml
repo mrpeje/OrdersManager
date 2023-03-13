@@ -1,0 +1,19 @@
+﻿@{
+    ViewData["Title"] = "List of orders";
+    var headers = new List<string>() { "Number", "Date", "ProviderId" };
+    var data = new List<OrderModel>();
+}
+@model List<OrderModel>
+@using HtmlHelper
+
+<h1>@ViewData["Title"]</h1>
+@if(Model != null)
+{
+    @ListHelper.Table(Html, Model,headers)
+}
+else
+{
+    @ListHelper.Table(Html, data,headers)   
+}
+
+
