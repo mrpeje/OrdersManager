@@ -1,8 +1,10 @@
 ﻿@{
     ViewData["Title"] = "List of orders";
-    var headers = new List<string>() { "Number", "Date", "ProviderId" };
+    var headers = new List<(string propertyName, string colName)> { ("Number", "Number"), ("Date", "Date"), ("ProviderId", "ProviderId") }; 
     var data = new List<OrderModel>();
-}
+};
+
+
 @model List<OrderModel>
 @using HtmlHelper
 

@@ -7,7 +7,7 @@ namespace HtmlHelper
 {
     public static class ListHelper
     {
-        public static IHtmlContent Table(this IHtmlHelper helper, List<OrderModel> data, List<string> headers)
+        public static IHtmlContent Table(this IHtmlHelper helper, List<OrderModel> data, List<(string propertyName, string colName)> headers)
         {
             //Tags
             var table = new TagBuilder("table");
@@ -17,7 +17,7 @@ namespace HtmlHelper
             foreach (var s in headers)
             {
                 var th = new TagBuilder("th");
-                th.InnerHtml.Append(s);
+                th.InnerHtml.Append(s.colName);
                 tr.InnerHtml.AppendHtml(th);
             }
             table.InnerHtml.AppendHtml(tr);
@@ -29,7 +29,7 @@ namespace HtmlHelper
                 foreach (var h in headers)
                 {
                     var td = new TagBuilder("td");
-                    td.InnerHtml.Append(d.ToString());
+                    td.InnerHtml.Append(d.GetType().GetProperty(h.propertyName).GetValue(d, null)?.ToString());
                     tr.InnerHtml.AppendHtml(td);
                 }
 
