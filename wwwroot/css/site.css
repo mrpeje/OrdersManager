@@ -32,3 +32,12 @@ td, th {
 tr:nth-child(even) {
     background-color: #dddddd;
 }
+
+select {
+    font-size: 12px !important;
+    text-overflow: ellipsis;
+}
+
+    select option {
+        font-size: 12px;
+    }

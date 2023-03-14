@@ -2,25 +2,32 @@
     ViewData["Title"] = "List of orders";
     var headers = new List<(string propertyName, string colName)> { ("Number", "Number"), ("Date", "Date"), ("ProviderId", "ProviderId") }; 
     var data = new List<OrderModel>();
-
+    int i = 0;
+    int i2 = 0;
 }
 
 
-@model List<OrderModel>
+@model IndexPageModel
 @using HtmlHelper
 
 <h1>@ViewData["Title"]</h1>
 <div>
     <form method="post">
-        <input id="dateStart" name=dateStart type="date" value=@ViewBag.dateStart />
+        <input id="1" name=dateStart type="date" value=@ViewBag.dateStart />
         <label> - </label>     
-        <input id="dateEnd" name="dateEnd" type="date" value=@ViewBag.dateEnd />
+        <input id="2" name="dateEnd" type="date" value=@ViewBag.dateEnd />
+
+        <label>Number filter</label> 
+        <select  asp-for="NumberList" asp-items="@Model.NumberList" name="NumberFilter" size=3 > select </select>
+        <label>Provider filter</label>
+        <select  asp-for="ProviderList" asp-items="@Model.ProviderList" name="ProviderFilter" size=3 > select </select>
+        
         <input type="submit" value="Применить" />
     </form>
 </div>
-@if(Model != null)
+@if(Model.Orders != null)
 {
-    @ListHelper.Table(Html, Model,headers)
+    @ListHelper.Table(Html, Model.Orders,headers)
 }
 else
 {
