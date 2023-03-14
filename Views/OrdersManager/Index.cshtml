@@ -2,13 +2,22 @@
     ViewData["Title"] = "List of orders";
     var headers = new List<(string propertyName, string colName)> { ("Number", "Number"), ("Date", "Date"), ("ProviderId", "ProviderId") }; 
     var data = new List<OrderModel>();
-};
+
+}
 
 
 @model List<OrderModel>
 @using HtmlHelper
 
 <h1>@ViewData["Title"]</h1>
+<div>
+    <form method="post">
+        <input id="dateStart" name=dateStart type="date" value=@ViewBag.dateStart />
+        <label> - </label>     
+        <input id="dateEnd" name="dateEnd" type="date" value=@ViewBag.dateEnd />
+        <input type="submit" value="Применить" />
+    </form>
+</div>
 @if(Model != null)
 {
     @ListHelper.Table(Html, Model,headers)
