@@ -1,6 +1,47 @@
 ﻿@{
     ViewData["Title"] = "Order item Create/Edit page";
+    var headers = new List<(string propertyName, string colName)> { ("Name", "Имя"), ("Quantity", "Количество"), ("Unit", "Секция") };
+
+    var item = new OrderItemModel();
+    if(Model.Order == null)
+        Model.Order  = new OrderModel();
+    if(Model.OrderItems == null)
+        Model.OrderItems  = new List<OrderItemModel>();
+    Model.Order.Date = DateTime.Today;
+
 }
 <h1>@ViewData["Title"]</h1>
+@model EditCreatePageModel
+@using HtmlHelper
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div>
+    </div>
+    @using(Html.BeginForm("AddOrderItem", "OrdersManager", FormMethod.Post))
+    {
+        @Html.EditorFor(m => Model.Order)
+        @Html.EditorFor(m => Model.NewOrderItem)
+        @for (int i = 0; i < Model.OrderItems.Count; i++)
+        {
+            @Html.HiddenFor((m => Model.OrderItems[i].OrderId)) 
+            @Html.HiddenFor((m => Model.OrderItems[i].Name)) 
+            @Html.HiddenFor((m => Model.OrderItems[i].Quantity)) 
+            @Html.HiddenFor((m => Model.OrderItems[i].Unit)) 
+        }
+        <p><input type="submit" value="Добавить предмет в заказ" /></p>
+    }
+    @using(Html.BeginForm("OrderCreateEdit", "OrdersManager", FormMethod.Post))
+    {
+        @Html.HiddenFor(m => Model.Order.Number)
+        @Html.HiddenFor(m => Model.Order.Date)
+        @Html.HiddenFor(m => Model.Order.ProviderId)
+        @Html.HiddenFor(m => Model.Order.Provider)
+        @for (int i = 0; i < Model.OrderItems.Count; i++)
+        {
+            @Html.HiddenFor((m => Model.OrderItems[i].OrderId)) 
+            @Html.HiddenFor((m => Model.OrderItems[i].Name)) 
+            @Html.HiddenFor((m => Model.OrderItems[i].Quantity)) 
+            @Html.HiddenFor((m => Model.OrderItems[i].Unit)) 
+        }
+        <p><input type="submit" value="Сохранить заказ" /></p>
+    }
+@ListHelper.Table(Html, @Model.OrderItems, headers) 
