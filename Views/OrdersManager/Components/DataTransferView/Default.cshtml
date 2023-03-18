@@ -1,0 +1,13 @@
+﻿@model EditCreatePageModel
+
+@Html.HiddenFor(m => Model.Order.Number)
+@Html.HiddenFor(m => Model.Order.Date)
+@Html.HiddenFor(m => Model.Order.ProviderId)
+@for (int i = 0; i < Model.OrderItems.Count; i++)
+{
+    @Html.HiddenFor(m => Model.OrderItems[i].OrderId) 
+    @Html.HiddenFor(m => Model.OrderItems[i].Name) 
+    @Html.HiddenFor(m => Model.OrderItems[i].Quantity)
+    @Html.HiddenFor(m => Model.OrderItems[i].Unit)
+    @Html.HiddenFor(m => Model.OrderItems[i].Order) 
+}

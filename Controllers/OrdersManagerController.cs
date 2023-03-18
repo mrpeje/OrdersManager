@@ -51,7 +51,9 @@ namespace OrdersManager.Controllers
             var data = JsonConvert.DeserializeObject<List<OrderModel>>(responseString);
             if(data != null)
             {
+                // Filter by date range
                 var orders = data.Where(e => e.Date > dateStart && e.Date < dateEnd).ToList();
+                // Filter by Order fields
                 result = orders.Where(e => NumberFilter.Contains(e.Number) || ProviderFilter.Contains(e.ProviderId.ToString())).ToList();
             }
 
@@ -60,29 +62,6 @@ namespace OrdersManager.Controllers
             return View(pageModel);
         }
 
-
-        public async Task<IActionResult> OrderView(int orderId)
-        {
-            var uri = @"https://localhost:7063/api/Orders/" + orderId;
-            HttpClient client = new HttpClient();
-            var responseString = await client.GetStringAsync(uri);
-            var data = JsonConvert.DeserializeObject<List<OrderModel>>(responseString);
-
-            return View(data);
-        }       
-
-        [HttpPost]
-        public async Task<IActionResult> OrderCreateEdit(OrderModel order)
-        {
-            var uri = @"https://localhost:7063/api/Orders/EditOrder";
-            var serData = JsonConvert.SerializeObject(order);
-            HttpClient client = new HttpClient();
-            var content = new StringContent(serData, Encoding.UTF8, "application/json");
-            var response = client.PostAsync(uri, content);
-            var data = await response.Result.Content.ReadAsStringAsync();
-
-            return View();
-        }
         // Init IndexPageModel
         IndexPageModel NewPageModel(List<OrderModel> orders)
         {
@@ -113,6 +92,66 @@ namespace OrdersManager.Controllers
                 };
             });
             return new IndexPageModel(orders, providerListSelect, numberListSelect);
+        }
+
+
+        // OrderCreateEdit init page
+        public async Task<IActionResult> OrderCreateEdit(EditCreatePageModel model)
+        {
+            if (model == null)
+                model = new EditCreatePageModel(new OrderModel(), new List<OrderItemModel>());
+            return View(model);
+        }
+
+        // Add order item action
+        [HttpPost]       
+        public IActionResult AddOrderItem(EditCreatePageModel model, OrderItemModel newOrderItem)
+        {
+            if (ModelState.IsValid)
+            {                
+                if (model.OrderItems == null)
+                    model.OrderItems = new List<OrderItemModel>();
+                newOrderItem.Order = model.Order;
+                model.OrderItems.Add(newOrderItem);
+
+                ModelState.Clear();
+            }
+            return View("OrderCreateEdit", model);
+        }
+
+        // Remove OrderItem action
+        [HttpPost]
+        public IActionResult DeleteOrderItem(EditCreatePageModel model, int id)
+        {
+            if (ModelState.IsValid)
+            {
+                model.OrderItems.Remove(model.OrderItems[id]);
+                ModelState.Clear();
+            }
+            return View("OrderCreateEdit", model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> OrderSave(EditCreatePageModel model)
+        {
+            //var uri = @"https://localhost:7063/api/Orders/EditOrder";
+            //var serData = JsonConvert.SerializeObject(model.Order);
+            //HttpClient client = new HttpClient();
+            //var content = new StringContent(serData, Encoding.UTF8, "application/json");
+            //var response = client.PostAsync(uri, content);
+            //var data = await response.Result.Content.ReadAsStringAsync();
+
+            return View(model);
+        }
+
+        public async Task<IActionResult> OrderView(int orderId)
+        {
+            var uri = @"https://localhost:7063/api/Orders/" + orderId;
+            HttpClient client = new HttpClient();
+            var responseString = await client.GetStringAsync(uri);
+            var data = JsonConvert.DeserializeObject<List<OrderModel>>(responseString);
+
+            return View(data);
         }
     }
 }

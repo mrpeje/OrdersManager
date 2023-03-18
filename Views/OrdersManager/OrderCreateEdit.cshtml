@@ -4,22 +4,32 @@
 
     var item = new OrderItemModel();
     if(Model.Order == null)
+    {
         Model.Order  = new OrderModel();
+        Model.Order.Date = DateTime.Today;
+    }
+
     if(Model.OrderItems == null)
         Model.OrderItems  = new List<OrderItemModel>();
-    Model.Order.Date = DateTime.Today;
+    
+    var newOrderItem = new OrderItemModel();
+    newOrderItem.Order = Model.Order;
 
+    var partialView = await Component.InvokeAsync("DataTransferView", Model);    
+        
 }
 <h1>@ViewData["Title"]</h1>
 @model EditCreatePageModel
 @using HtmlHelper
+@using Microsoft.AspNetCore.Html
+
 
 <div>
     </div>
     @using(Html.BeginForm("AddOrderItem", "OrdersManager", FormMethod.Post))
     {
         @Html.EditorFor(m => Model.Order)
-        @Html.EditorFor(m => Model.NewOrderItem)
+        @Html.EditorFor(m => newOrderItem)
         @for (int i = 0; i < Model.OrderItems.Count; i++)
         {
             @Html.HiddenFor((m => Model.OrderItems[i].OrderId)) 
@@ -29,19 +39,12 @@
         }
         <p><input type="submit" value="Добавить предмет в заказ" /></p>
     }
-    @using(Html.BeginForm("OrderCreateEdit", "OrdersManager", FormMethod.Post))
+    @using(Html.BeginForm("OrderSave", "OrdersManager", FormMethod.Post))
     {
-        @Html.HiddenFor(m => Model.Order.Number)
-        @Html.HiddenFor(m => Model.Order.Date)
-        @Html.HiddenFor(m => Model.Order.ProviderId)
-        @Html.HiddenFor(m => Model.Order.Provider)
-        @for (int i = 0; i < Model.OrderItems.Count; i++)
-        {
-            @Html.HiddenFor((m => Model.OrderItems[i].OrderId)) 
-            @Html.HiddenFor((m => Model.OrderItems[i].Name)) 
-            @Html.HiddenFor((m => Model.OrderItems[i].Quantity)) 
-            @Html.HiddenFor((m => Model.OrderItems[i].Unit)) 
-        }
+        @await Component.InvokeAsync("DataTransferView",Model);
+       
+
         <p><input type="submit" value="Сохранить заказ" /></p>
     }
-@ListHelper.Table(Html, @Model.OrderItems, headers) 
+
+@ListHelper.Table(Html, Model.OrderItems, headers, partialView) 
