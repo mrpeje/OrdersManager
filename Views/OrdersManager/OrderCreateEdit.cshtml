@@ -26,9 +26,11 @@
 
 <div>
     </div>
-    @using(Html.BeginForm("AddOrderItem", "OrdersManager", FormMethod.Post))
+    @using(Html.BeginForm("ProcessForm", "OrdersManager", FormMethod.Post))
     {
         @Html.EditorFor(m => Model.Order)
+        <p><input name="SaveOrder" type="submit" value="Сохранить заказ"  /></p>
+
         @Html.EditorFor(m => newOrderItem)
         @for (int i = 0; i < Model.OrderItems.Count; i++)
         {
@@ -36,15 +38,9 @@
             @Html.HiddenFor((m => Model.OrderItems[i].Name)) 
             @Html.HiddenFor((m => Model.OrderItems[i].Quantity)) 
             @Html.HiddenFor((m => Model.OrderItems[i].Unit)) 
-        }
-        <p><input type="submit" value="Добавить предмет в заказ" /></p>
+        }                    
+        <p><input name="AddOrderItem" type="submit" value="Добавить предмет в заказ"/></p>
     }
-    @using(Html.BeginForm("OrderSave", "OrdersManager", FormMethod.Post))
-    {
-        @await Component.InvokeAsync("DataTransferView",Model);
-       
 
-        <p><input type="submit" value="Сохранить заказ" /></p>
-    }
 
 @ListHelper.Table(Html, Model.OrderItems, headers, partialView) 

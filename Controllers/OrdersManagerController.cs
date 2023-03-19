@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using OrdersManager.Models;
+using System.Net;
 using System.Text;
 
 namespace OrdersManager.Controllers
@@ -19,13 +20,14 @@ namespace OrdersManager.Controllers
 
             var orders = new List<OrderModel>();
             try
-            {           
+            {
+                GetResponse request = new GetResponse();
                 var uri = @"https://localhost:7063/api/Orders";
-                HttpClient client = new HttpClient();
-                var responseString = await client.GetStringAsync(uri);
+                var responseString = await request.Get(uri);
+               
                 var data = JsonConvert.DeserializeObject<List<OrderModel>>(responseString);
 
-                orders = data.Where(e => e.Date > DateTime.Today.AddMonths(-1) && e.Date < DateTime.Today).ToList();
+                orders = data.Where(e => e.Date > DateTime.Today.AddMonths(-1) && e.Date <= DateTime.Today).ToList();
 
                 var pageModel = NewPageModel(orders);
                 return View(pageModel);
@@ -103,23 +105,22 @@ namespace OrdersManager.Controllers
             return View(model);
         }
 
-        // Add order item action
-        [HttpPost]       
-        public IActionResult AddOrderItem(EditCreatePageModel model, OrderItemModel newOrderItem)
+        
+        [HttpPost]
+        public async Task<IActionResult> ProcessForm(EditCreatePageModel model, OrderItemModel newOrderItem, string? saveOrder, string? addOrderItem)
         {
-            if (ModelState.IsValid)
-            {                
-                if (model.OrderItems == null)
-                    model.OrderItems = new List<OrderItemModel>();
-                newOrderItem.Order = model.Order;
-                model.OrderItems.Add(newOrderItem);
-
-                ModelState.Clear();
+            if (saveOrder != null) 
+            {
+                return await OrderSave(model);
+            }
+            if (addOrderItem != null) 
+            {
+                return AddOrderItem(model, newOrderItem);
             }
             return View("OrderCreateEdit", model);
-        }
-
-        // Remove OrderItem action
+        }   
+        
+        // Remove OrderItem 
         [HttpPost]
         public IActionResult DeleteOrderItem(EditCreatePageModel model, int id)
         {
@@ -131,19 +132,41 @@ namespace OrdersManager.Controllers
             return View("OrderCreateEdit", model);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> OrderSave(EditCreatePageModel model)
+        // Save order
+        private async Task<IActionResult> OrderSave(EditCreatePageModel model)
         {
-            //var uri = @"https://localhost:7063/api/Orders/EditOrder";
-            //var serData = JsonConvert.SerializeObject(model.Order);
-            //HttpClient client = new HttpClient();
-            //var content = new StringContent(serData, Encoding.UTF8, "application/json");
-            //var response = client.PostAsync(uri, content);
-            //var data = await response.Result.Content.ReadAsStringAsync();
+            GetResponse request = new GetResponse();
+            var uri = @"https://localhost:7063/api/Orders/CreateEditOrder";
+            var serializedData = JsonConvert.SerializeObject(model);
 
-            return View(model);
+            var response = await request.Post(uri, serializedData);            
+            var status = response.StatusCode;
+            if(status == HttpStatusCode.OK)
+            {
+                ModelState.Clear();
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                return View("OrderCreateEdit", model);
+            }
+            
         }
 
+        // Add order item
+        private IActionResult AddOrderItem(EditCreatePageModel model, OrderItemModel newOrderItem)
+        {
+            if (ModelState.IsValid)
+            {
+                if (model.OrderItems == null)
+                    model.OrderItems = new List<OrderItemModel>();
+                newOrderItem.Order = model.Order;
+                model.OrderItems.Add(newOrderItem);
+
+                ModelState.Clear();
+            }
+            return View("OrderCreateEdit", model);
+        }
         public async Task<IActionResult> OrderView(int orderId)
         {
             var uri = @"https://localhost:7063/api/Orders/" + orderId;
