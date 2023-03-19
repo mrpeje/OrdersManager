@@ -12,7 +12,7 @@ namespace OrdersManager.Controllers
         // Orders overview page
         public async Task<IActionResult> Index()
         {
-            
+
             var dateEndStr = DateTime.Today.ToString("yyyy-MM-dd");
             var dateStart = DateTime.Today.AddMonths(-1).ToString("yyyy-MM-dd");
             ViewBag.dateStart = dateStart;
@@ -24,7 +24,7 @@ namespace OrdersManager.Controllers
                 GetResponse request = new GetResponse();
                 var uri = @"https://localhost:7063/api/Orders";
                 var responseString = await request.Get(uri);
-               
+
                 var data = JsonConvert.DeserializeObject<List<OrderModel>>(responseString);
 
                 orders = data.Where(e => e.Date > DateTime.Today.AddMonths(-1) && e.Date <= DateTime.Today).ToList();
@@ -32,9 +32,9 @@ namespace OrdersManager.Controllers
                 var pageModel = NewPageModel(orders);
                 return View(pageModel);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                
+
             }
             return View();
         }
@@ -51,7 +51,7 @@ namespace OrdersManager.Controllers
 
             var responseString = await client.GetStringAsync(uri);
             var data = JsonConvert.DeserializeObject<List<OrderModel>>(responseString);
-            if(data != null)
+            if (data != null)
             {
                 // Filter by date range
                 var orders = data.Where(e => e.Date > dateStart && e.Date < dateEnd).ToList();
@@ -60,7 +60,7 @@ namespace OrdersManager.Controllers
             }
 
             var pageModel = NewPageModel(result);
-            
+
             return View(pageModel);
         }
 
@@ -105,21 +105,21 @@ namespace OrdersManager.Controllers
             return View(model);
         }
 
-        
+
         [HttpPost]
         public async Task<IActionResult> ProcessForm(EditCreatePageModel model, OrderItemModel newOrderItem, string? saveOrder, string? addOrderItem)
         {
-            if (saveOrder != null) 
+            if (saveOrder != null)
             {
                 return await OrderSave(model);
             }
-            if (addOrderItem != null) 
+            if (addOrderItem != null)
             {
                 return AddOrderItem(model, newOrderItem);
             }
             return View("OrderCreateEdit", model);
-        }   
-        
+        }
+
         // Remove OrderItem 
         [HttpPost]
         public IActionResult DeleteOrderItem(EditCreatePageModel model, int id)
@@ -139,9 +139,9 @@ namespace OrdersManager.Controllers
             var uri = @"https://localhost:7063/api/Orders/CreateEditOrder";
             var serializedData = JsonConvert.SerializeObject(model);
 
-            var response = await request.Post(uri, serializedData);            
+            var response = await request.Post(uri, serializedData);
             var status = response.StatusCode;
-            if(status == HttpStatusCode.OK)
+            if (status == HttpStatusCode.OK)
             {
                 ModelState.Clear();
                 return RedirectToAction("Index");
@@ -150,7 +150,7 @@ namespace OrdersManager.Controllers
             {
                 return View("OrderCreateEdit", model);
             }
-            
+
         }
 
         // Add order item
@@ -167,12 +167,14 @@ namespace OrdersManager.Controllers
             }
             return View("OrderCreateEdit", model);
         }
-        public async Task<IActionResult> OrderView(int orderId)
+        
+        public async Task<IActionResult> ViewOrder(int id)
         {
-            var uri = @"https://localhost:7063/api/Orders/" + orderId;
-            HttpClient client = new HttpClient();
-            var responseString = await client.GetStringAsync(uri);
-            var data = JsonConvert.DeserializeObject<List<OrderModel>>(responseString);
+            var uri = @"https://localhost:7063/api/Orders/" + id;
+            GetResponse request = new GetResponse();
+            var responseString = await request.Get(uri);
+            
+            var data = JsonConvert.DeserializeObject<EditCreatePageModel>(responseString);
 
             return View(data);
         }

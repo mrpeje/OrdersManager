@@ -5,6 +5,7 @@ namespace OrdersManager.Models
 {
     public class OrderModel
     {
+        public int Id { get; set; }
         [Required]
         public string Number { get; set; }
 

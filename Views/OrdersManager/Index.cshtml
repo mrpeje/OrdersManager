@@ -27,13 +27,31 @@
         <a class="nav-link text-dark" asp-area="" asp-controller="OrdersManager" asp-action="OrderCreateEdit">Создать заказ</a>
     </div>
 </div>
-@if(Model != null)
+<div class="table">
+
+    <div class="grid-container">
+          @foreach(var item in headers)
+        {
+            <div  class="th">@item.colName</div>    
+        }
+        @foreach(var item in Model.Orders)
+        {
+
+            <a asp-action="ViewOrder" asp-route-id="@item.Id" style="display: contents; color:black;">
+                <div class="td">@item.Number</div> 
+                <div class="td">@item.Date</div> 
+                <div class="td">@item.ProviderId</div>
+            </a>
+        }
+    </div>
+</div>
+@*@if(Model != null)
 {
     @ListHelper.Table(Html, Model.Orders, headers)
 }
 else
 {
     @ListHelper.Table(Html, data, headers)   
-}
+}*@
 
 
