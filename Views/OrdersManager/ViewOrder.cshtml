@@ -1,6 +1,35 @@
 ﻿@{
+    var headers = new List<(string propertyName, string colName)> { ("Name", "Имя"), ("Quantity", "Количество"), ("Unit", "Секция") };
     ViewData["Title"] = "Order View page";
+    int id = Model.Order.Id;
 }
 <h1>@ViewData["Title"]</h1>
+@model EditCreatePageModel
+@using HtmlHelper
+@using Microsoft.AspNetCore.Html
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="td">
+    <div>
+        <label>Номер</label>
+        <input asp-for=Order.Number  type="text" disabled="disabled"/>
+    </div>
+
+     <div>
+        <label>Дата</label>
+        <input asp-for=Order.Date  type="text" disabled="disabled"/>
+    </div>
+    <div>
+        <label>Провайдер</label>
+        <input asp-for=Order.ProviderId  type="text" disabled="disabled"/>
+    </div>
+</div>
+
+@using(Html.BeginForm("ProcessFormOrderView", "OrdersManager", FormMethod.Post))
+{
+    @Html.HiddenFor(m => id)
+    <p><input name="DeleteOrder" type="submit" value="Удалить заказ" class="delete-button"/></p>
+           
+    <p><input name="EditOrder" type="submit" value="Редактировать заказ" class="add-button"/></p>
+}
+
+@ListHelper.Table(Html, Model.OrderItems, headers) 

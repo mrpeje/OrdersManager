@@ -18,7 +18,10 @@ namespace OrdersManager.Controllers
             ViewBag.dateStart = dateStart;
             ViewBag.dateEnd = dateEndStr;
 
+            
+
             var orders = new List<OrderModel>();
+            var pageModel = NewPageModel(orders);
             try
             {
                 GetResponse request = new GetResponse();
@@ -29,14 +32,14 @@ namespace OrdersManager.Controllers
 
                 orders = data.Where(e => e.Date > DateTime.Today.AddMonths(-1) && e.Date <= DateTime.Today).ToList();
 
-                var pageModel = NewPageModel(orders);
+                pageModel = NewPageModel(orders);
                 return View(pageModel);
             }
             catch (Exception ex)
             {
 
             }
-            return View();
+            return View(pageModel);
         }
 
         // Filter orders list
@@ -177,6 +180,29 @@ namespace OrdersManager.Controllers
             var data = JsonConvert.DeserializeObject<EditCreatePageModel>(responseString);
 
             return View(data);
+        }
+        [HttpPost]
+        public async Task<IActionResult> ProcessFormOrderView(int id, string? DeleteOrder, string? EditOrder)
+        {
+            if(ModelState.IsValid)
+            if (DeleteOrder != null)
+            {
+                GetResponse request = new GetResponse();
+                var uri = @"https://localhost:7063/api/Orders/Order/";
+
+                var response = await request.Delete(uri, id);
+                var status = response.StatusCode;
+                if (status == HttpStatusCode.OK)
+                {
+                    ModelState.Clear();
+                    return RedirectToAction("Index");
+                }               
+            }
+            if (EditOrder != null)
+            {
+                return View("CreateEditOrder", id);
+            }
+            return View("Index");
         }
     }
 }

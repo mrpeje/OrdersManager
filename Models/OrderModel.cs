@@ -5,6 +5,7 @@ namespace OrdersManager.Models
 {
     public class OrderModel
     {
+        [HiddenInput(DisplayValue = false)]
         public int Id { get; set; }
         [Required]
         public string Number { get; set; }

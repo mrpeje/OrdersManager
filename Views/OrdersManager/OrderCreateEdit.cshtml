@@ -29,7 +29,7 @@
     @using(Html.BeginForm("ProcessForm", "OrdersManager", FormMethod.Post))
     {
         @Html.EditorFor(m => Model.Order)
-        <p><input name="SaveOrder" type="submit" value="Сохранить заказ"  /></p>
+        <p><input name="SaveOrder" type="submit" value="Сохранить заказ" class="save-button" /></p>
 
         @Html.EditorFor(m => newOrderItem)
         @for (int i = 0; i < Model.OrderItems.Count; i++)
@@ -39,7 +39,7 @@
             @Html.HiddenFor((m => Model.OrderItems[i].Quantity)) 
             @Html.HiddenFor((m => Model.OrderItems[i].Unit)) 
         }                    
-        <p><input name="AddOrderItem" type="submit" value="Добавить предмет в заказ"/></p>
+        <p><input name="AddOrderItem" type="submit" value="Добавить предмет в заказ" class="add-button"/></p>
     }
 
 

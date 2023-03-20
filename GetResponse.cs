@@ -31,5 +31,11 @@ namespace OrdersManager
             var response = await client.PostAsync(uri, content);
             return response;
         }
+        public async Task<HttpResponseMessage> Delete(string uri, int id)
+        {
+            HttpClient client = new HttpClient();
+            var response = await client.DeleteAsync(uri + id.ToString());
+            return response;
+        }
     }
 }
