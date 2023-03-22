@@ -4,11 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrdersManager", "OrdersManager.csproj", "{FF3466D0-2E16-4FEA-8724-5C76B873048A}"
-	ProjectSection(ProjectDependencies) = postProject
-		{2A92C0BA-C843-4D22-9728-574EC95ABEB6} = {2A92C0BA-C843-4D22-9728-574EC95ABEB6}
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbAccessAPI", "..\DbAccessAPI\DbAccessAPI.csproj", "{2A92C0BA-C843-4D22-9728-574EC95ABEB6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,10 +15,6 @@ Global
 		{FF3466D0-2E16-4FEA-8724-5C76B873048A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF3466D0-2E16-4FEA-8724-5C76B873048A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FF3466D0-2E16-4FEA-8724-5C76B873048A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2A92C0BA-C843-4D22-9728-574EC95ABEB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2A92C0BA-C843-4D22-9728-574EC95ABEB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2A92C0BA-C843-4D22-9728-574EC95ABEB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2A92C0BA-C843-4D22-9728-574EC95ABEB6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

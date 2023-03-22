@@ -6,11 +6,17 @@ namespace OrdersManager.Models
     public class OrderItemModel
     {
         [HiddenInput(DisplayValue = false)]
+        public int id { get; set; }
+
+        [HiddenInput(DisplayValue = false)]
         public int OrderId { get; set; }
+
         [Required]
         public string Name { get; set; }
+
         [Required]
         public decimal Quantity { get; set; }
+
         [Required]
         public string Unit { get; set; }
 

@@ -1,12 +1,15 @@
-
-
-using OrdersManager.Layers.Validator;
+using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
+using OrdersManager.Models;
+using OrdersManager.Validator;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddScoped<IValidator, Validator>();
+
+builder.Services.AddScoped<IValidator<EditCreatePageModel>, OrderValidator>();
+
 
 var app = builder.Build();
 

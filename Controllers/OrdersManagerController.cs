@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using OrdersManager.Models;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Text;
 
@@ -9,6 +12,13 @@ namespace OrdersManager.Controllers
 {
     public class OrdersManagerController : Controller
     {
+
+        private IValidator<EditCreatePageModel> _validator;
+        public OrdersManagerController(IValidator<EditCreatePageModel> validator)
+        {
+            _validator = validator;
+        }
+
         // Orders overview page
         public async Task<IActionResult> Index()
         {
@@ -110,16 +120,17 @@ namespace OrdersManager.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> ProcessForm(EditCreatePageModel model, OrderItemModel newOrderItem, string? saveOrder, string? addOrderItem)
+        public async Task<IActionResult> ProcessFormOrderCreateEdit(EditCreatePageModel model, string? saveOrder, string? addOrderItem)
         {
             if (saveOrder != null)
             {
+                
                 return await OrderSave(model);
-            }
+            }                        
             if (addOrderItem != null)
             {
-                return AddOrderItem(model, newOrderItem);
-            }
+                return AddOrderItem(model, model.NewOrderItem);
+            }           
             return View("OrderCreateEdit", model);
         }
 
@@ -138,39 +149,52 @@ namespace OrdersManager.Controllers
         // Save order
         private async Task<IActionResult> OrderSave(EditCreatePageModel model)
         {
-            GetResponse request = new GetResponse();
-            var uri = @"https://localhost:7063/api/Orders/CreateEditOrder";
-            var serializedData = JsonConvert.SerializeObject(model);
+            ModelState.ClearValidationState("NewOrderItem.Name");
+            ModelState.ClearValidationState("NewOrderItem.Unit");
+            ModelState.MarkFieldValid("NewOrderItem.Unit");
+            ModelState.MarkFieldValid("NewOrderItem.Name");
+            var resultValidation = await _validator.ValidateAsync(model, options => options.IncludeRuleSets("Order"));
+            resultValidation.AddToModelState(this.ModelState);
 
-            var response = await request.Post(uri, serializedData);
-            var status = response.StatusCode;
-            if (status == HttpStatusCode.OK)
+
+            if (ModelState.IsValid)
             {
-                ModelState.Clear();
-                return RedirectToAction("Index");
+                GetResponse request = new GetResponse();
+                var uri = @"https://localhost:7063/api/Orders/CreateEditOrder";
+                var serializedData = JsonConvert.SerializeObject(model);
+
+                var response = await request.Post(uri, serializedData);
+                var status = response.StatusCode;
+                if (status == HttpStatusCode.OK)
+                {
+                    ModelState.Clear();
+                    return RedirectToAction("Index");
+                }
             }
-            else
-            {
-                return View("OrderCreateEdit", model);
-            }
+            return View("OrderCreateEdit", model);
 
         }
 
         // Add order item
-        private IActionResult AddOrderItem(EditCreatePageModel model, OrderItemModel newOrderItem)
+        private IActionResult AddOrderItem(EditCreatePageModel model, OrderItemModel newItem)
         {
-            if (ModelState.IsValid)
+            var resultValidation = _validator.Validate(model, options => options.IncludeRuleSets("OrderItems"));
+            
+            //ModelState.ClearValidationState("Order");
+            if (ModelState.IsValid && resultValidation.IsValid)
             {
                 if (model.OrderItems == null)
                     model.OrderItems = new List<OrderItemModel>();
-                newOrderItem.Order = model.Order;
-                model.OrderItems.Add(newOrderItem);
+                newItem.Order = model.Order;
+                model.OrderItems.Add(newItem);
 
                 ModelState.Clear();
             }
+            resultValidation.AddToModelState(this.ModelState);
             return View("OrderCreateEdit", model);
         }
-        
+
+        // View order with OrderItems
         public async Task<IActionResult> ViewOrder(int id)
         {
             var uri = @"https://localhost:7063/api/Orders/" + id;
@@ -181,6 +205,7 @@ namespace OrdersManager.Controllers
 
             return View(data);
         }
+        
         [HttpPost]
         public async Task<IActionResult> ProcessFormOrderView(int id, string? DeleteOrder, string? EditOrder)
         {
@@ -200,7 +225,12 @@ namespace OrdersManager.Controllers
             }
             if (EditOrder != null)
             {
-                return View("CreateEditOrder", id);
+                var uri = @"https://localhost:7063/api/Orders/" + id;
+                GetResponse request = new GetResponse();
+                var responseString = await request.Get(uri);
+
+                var model = JsonConvert.DeserializeObject<EditCreatePageModel>(responseString);
+                return View("OrderCreateEdit", model);
             }
             return View("Index");
         }
