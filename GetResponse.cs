@@ -5,6 +5,7 @@ namespace OrdersManager
 {
     public class GetResponse
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         /// <summary>
         /// Реализуем отправку запроса и чтение ответа
         /// </summary>
@@ -17,25 +18,56 @@ namespace OrdersManager
                 HttpClient client = new HttpClient();
                 return await client.GetStringAsync(uri);
             }
-            catch (Exception ex)
+            catch (HttpRequestException httpEception)
             {
-                //logger.Error(uri + ex.ToString());
-                return null;
+                logger.Error(uri + httpEception.ToString());
+                return "";
+            }
+            catch (Exception ex)
+            {                              
+                logger.Error("Unknow error " + ex.ToString());
+                return "";
             }
         }
-       
+
         public async Task<HttpResponseMessage> Post(string uri, string post)
         {
-            HttpClient client = new HttpClient();
-            var content = new StringContent(post, Encoding.UTF8, "application/json");
-            var response = await client.PostAsync(uri, content);
-            return response;
+            try
+            {
+                HttpClient client = new HttpClient();
+                var content = new StringContent(post, Encoding.UTF8, "application/json");
+                var response = await client.PostAsync(uri, content);
+                return response;
+            }
+            catch (HttpRequestException httpEception)
+            {
+                logger.Error(uri + httpEception.ToString());
+                return new HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Unknow error " + ex.ToString());
+                return new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
+            }
         }
         public async Task<HttpResponseMessage> Delete(string uri, int id)
         {
-            HttpClient client = new HttpClient();
-            var response = await client.DeleteAsync(uri + id.ToString());
-            return response;
+            try
+            {
+                HttpClient client = new HttpClient();
+                var response = await client.DeleteAsync(uri + id.ToString());
+                return response;
+            }
+            catch (HttpRequestException httpEception)
+            {
+                logger.Error(uri + httpEception.ToString());
+                return new HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Unknow error " + ex.ToString());
+                return new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
+            }
         }
     }
 }

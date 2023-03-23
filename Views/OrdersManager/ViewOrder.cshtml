@@ -1,5 +1,5 @@
 ﻿@{
-    var headers = new List<(string propertyName, string colName)> { ("Name", "Имя"), ("Quantity", "Количество"), ("Unit", "Секция") };
+    var headers = new List<string> { "Имя", "Количество","Секция" };
     ViewData["Title"] = "Order View page";
     int id = Model.Order.Id;
 }
@@ -23,7 +23,7 @@
         <input asp-for=Order.ProviderId  type="text" disabled="disabled"/>
     </div>
 </div>
-
+<span asp-validation-for="Order"></span>
 @using(Html.BeginForm("ProcessFormOrderView", "OrdersManager", FormMethod.Post))
 {
     @Html.HiddenFor(m => id)
@@ -32,4 +32,4 @@
     <p><input name="EditOrder" type="submit" value="Редактировать заказ" class="add-button"/></p>
 }
 
-@ListHelper.Table(Html, Model.OrderItems, headers) 
+@ListHelper.TableOrderItems(Html, Model.OrderItems, headers) 

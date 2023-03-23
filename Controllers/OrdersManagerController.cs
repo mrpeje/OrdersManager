@@ -7,12 +7,13 @@ using OrdersManager.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Text;
+using static OrdersManager.Routes;
 
 namespace OrdersManager.Controllers
 {
     public class OrdersManagerController : Controller
     {
-
+        
         private IValidator<EditCreatePageModel> _validator;
         public OrdersManagerController(IValidator<EditCreatePageModel> validator)
         {
@@ -26,28 +27,32 @@ namespace OrdersManager.Controllers
             var dateEndStr = DateTime.Today.ToString("yyyy-MM-dd");
             var dateStart = DateTime.Today.AddMonths(-1).ToString("yyyy-MM-dd");
             ViewBag.dateStart = dateStart;
-            ViewBag.dateEnd = dateEndStr;
-
-            
+            ViewBag.dateEnd = dateEndStr;           
 
             var orders = new List<OrderModel>();
             var pageModel = NewPageModel(orders);
             try
             {
+                // construct API request link
+                var uri = Orders.AllOrders;
+
                 GetResponse request = new GetResponse();
-                var uri = @"https://localhost:7063/api/Orders";
                 var responseString = await request.Get(uri);
 
-                var data = JsonConvert.DeserializeObject<List<OrderModel>>(responseString);
+                if(!string.IsNullOrEmpty(responseString))
+                {
+                    var data = JsonConvert.DeserializeObject<List<OrderModel>>(responseString);
+                    orders = data.Where(e => e.Date > DateTime.Today.AddMonths(-1) && e.Date <= DateTime.Now).ToList();
 
-                orders = data.Where(e => e.Date > DateTime.Today.AddMonths(-1) && e.Date <= DateTime.Today).ToList();
+                    pageModel = NewPageModel(orders);
+                    return View(pageModel);
+                }
+                return View();
 
-                pageModel = NewPageModel(orders);
-                return View(pageModel);
             }
             catch (Exception ex)
             {
-
+                return View();
             }
             return View(pageModel);
         }
@@ -56,18 +61,22 @@ namespace OrdersManager.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(DateTime dateStart, DateTime dateEnd, List<string> NumberFilter, List<string> ProviderFilter)
         {
+            dateEnd = dateEnd.AddDays(1);
             ViewBag.dateStart = dateStart.Date.ToString("yyyy-MM-dd");
-            ViewBag.dateEnd = dateEnd.Date.ToString("yyyy-MM-dd");
+            ViewBag.dateEnd = dateEnd.Date.ToString("yyyy-MM-dd");                                                              
             var result = new List<OrderModel>();
-            var uri = @"https://localhost:7063/api/Orders";
-            HttpClient client = new HttpClient();
 
-            var responseString = await client.GetStringAsync(uri);
+            // construct API request link
+            var uri = Orders.AllOrders;
+
+            GetResponse request = new GetResponse();
+            var responseString = await request.Get(uri);
+
             var data = JsonConvert.DeserializeObject<List<OrderModel>>(responseString);
             if (data != null)
             {
                 // Filter by date range
-                var orders = data.Where(e => e.Date > dateStart && e.Date < dateEnd).ToList();
+                var orders = data.Where(e => e.Date > dateStart && e.Date <= dateEnd).ToList();
                 // Filter by Order fields
                 result = orders.Where(e => NumberFilter.Contains(e.Number) || ProviderFilter.Contains(e.ProviderId.ToString())).ToList();
             }
@@ -119,14 +128,19 @@ namespace OrdersManager.Controllers
             if (model == null)
                 model = new EditCreatePageModel(new OrderModel(), new List<OrderItemModel>());
 
-            var uri = @"https://localhost:7063/api/Orders/Providers";
+            // construct API request link
+            var uri = Orders.Providers;
+
             GetResponse request = new GetResponse();
             var responseString = await request.Get(uri);
+            if (!string.IsNullOrEmpty(responseString))
+            {
+                var providers = JsonConvert.DeserializeObject<List<ProviderModel>>(responseString);
+                model.Providers = providers;
 
-            var providers = JsonConvert.DeserializeObject<List<ProviderModel>>(responseString);
-            model.Providers = providers;
-
-            return View(model);
+                return View(model);
+            }
+            return View("Index");
         }
 
 
@@ -168,13 +182,16 @@ namespace OrdersManager.Controllers
             ModelState.MarkFieldValid("NewOrderItem.Name");
 
             var resultValidation = await _validator.ValidateAsync(model, options => options.IncludeRuleSets("Order"));
+            var resultValidation2 = _validator.Validate(model, options => options.IncludeRuleSets("OrderItems"));
             resultValidation.AddToModelState(this.ModelState);
-
+            resultValidation2.AddToModelState(this.ModelState);
 
             if (ModelState.IsValid)
             {
+                // construct API request link
+                var uri = Orders.CreateEditOrder;
+                
                 GetResponse request = new GetResponse();
-                var uri = @"https://localhost:7063/api/Orders/CreateEditOrder";
                 var serializedData = JsonConvert.SerializeObject(model);
 
                 var response = await request.Post(uri, serializedData);
@@ -184,7 +201,12 @@ namespace OrdersManager.Controllers
                     ModelState.Clear();
                     return RedirectToAction("Index");
                 }
+                else
+                {
+                    
+                }
             }
+            ViewBag.ErrorMsg = "Не удалось сохранить заказ";
             return View("OrderCreateEdit", model);
 
         }
@@ -209,47 +231,78 @@ namespace OrdersManager.Controllers
         // View order with OrderItems
         public async Task<IActionResult> ViewOrder(int id)
         {
-            var uri = @"https://localhost:7063/api/Orders/" + id;
-            GetResponse request = new GetResponse();
-            var responseString = await request.Get(uri);
+            // construct API request link
+            var uri = Orders.Order;
             
-            var data = JsonConvert.DeserializeObject<EditCreatePageModel>(responseString);
+            GetResponse request = new GetResponse();
+            var responseString = await request.Get(uri + id);
+            if (!string.IsNullOrEmpty(responseString))
+            {
+                var data = JsonConvert.DeserializeObject<EditCreatePageModel>(responseString);
 
-            return View(data);
+                return View(data);
+            }
+            else
+            {
+                ViewBag.ErrorMsg = "Не удалось загрузить данные заказа";
+                return View("ErrorPage");
+            }
         }
         
         [HttpPost]
         public async Task<IActionResult> ProcessFormOrderView(int id, string? DeleteOrder, string? EditOrder)
         {
-            if(ModelState.IsValid)
-            if (DeleteOrder != null)
+            if (ModelState.IsValid)
             {
-                GetResponse request = new GetResponse();
-                var uri = @"https://localhost:7063/api/Orders/Order/";
-
-                var response = await request.Delete(uri, id);
-                var status = response.StatusCode;
-                if (status == HttpStatusCode.OK)
+                if (DeleteOrder != null)
                 {
-                    ModelState.Clear();
-                    return RedirectToAction("Index");
-                }               
+                    GetResponse request = new GetResponse();
+
+                    var uri = Orders.Order;                  
+
+                    var response = await request.Delete(uri, id);
+                    var status = response.StatusCode;
+                    if (status == HttpStatusCode.OK)
+                    {
+                        ModelState.Clear();
+                        return RedirectToAction("Index");
+                    }
+                    else
+                    {
+                        ModelState.Clear();
+                        ViewBag.ErrorMsg = "Неудачная попытка удаления заказа";
+                        return View("ErrorPage");
+                    }
+
+                }
             }
             if (EditOrder != null)
             {
-                var uri = @"https://localhost:7063/api/Orders/" + id;
+                var uri = Orders.Order;
+                //var uri = @"https://localhost:7063/api/Orders/Order" + id;
                 GetResponse request = new GetResponse();
-                var responseString = await request.Get(uri);
+                var responseString = await request.Get(uri+ id);
+                if (!string.IsNullOrEmpty(responseString))
+                {
+                    var model = JsonConvert.DeserializeObject<EditCreatePageModel>(responseString);
+                    responseString = null;
 
-                var model = JsonConvert.DeserializeObject<EditCreatePageModel>(responseString);
+                    uri = Orders.Providers;
 
-                uri = @"https://localhost:7063/api/Orders/Providers";
-                responseString = await request.Get(uri);
-
-                var providers = JsonConvert.DeserializeObject<List<ProviderModel>>(responseString);
-                model.Providers = providers;
-                ModelState.Clear();
-                return View("OrderCreateEdit", model);
+                    responseString = await request.Get(uri);
+                    if (!string.IsNullOrEmpty(responseString))
+                    {
+                        var providers = JsonConvert.DeserializeObject<List<ProviderModel>>(responseString);
+                        model.Providers = providers;
+                        ModelState.Clear();
+                        return View("OrderCreateEdit", model);
+                    }
+                }
+                else
+                {
+                    ViewBag.ErrorMsg = "Не удалось загрузить данные заказа";
+                    return View("ErrorPage");
+                }
             }
             return View("Index");
         }

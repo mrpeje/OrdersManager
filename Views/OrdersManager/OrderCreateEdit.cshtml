@@ -1,12 +1,10 @@
 ﻿@{
-    ViewData["Title"] = "Order item Create/Edit page";
-    var headers = new List<(string propertyName, string colName)> { ("Name", "Имя"), ("Quantity", "Количество"), ("Unit", "Секция") };
+    ViewData["Title"] = "Редактирование/Создание заказа";
 
-    var item = new OrderItemModel();
     if(Model.Order == null)
     {
         Model.Order  = new OrderModel();
-        Model.Order.Date = DateTime.Today;
+        Model.Order.Date = DateTime.Now;
     }
 
     if(Model.OrderItems == null)
@@ -51,9 +49,11 @@
     
     @Html.ValidationMessageFor(x => Model.Order)
     <p><input name="SaveOrder" type="submit" value="Сохранить заказ" class="save-button" /></p>
+    <label>@ViewBag.ErrorMsg</label>
 
     @Html.EditorFor(m => Model.NewOrderItem)
     @Html.ValidationMessageFor(x => Model.NewOrderItem)
+    @Html.ValidationMessageFor(x => Model.OrderItems)
     <p><input name="AddOrderItem" type="submit" value="Добавить предмет в заказ" class="add-button"/></p>
     @for (int i = 0; i < Model.OrderItems.Count; i++)
     {

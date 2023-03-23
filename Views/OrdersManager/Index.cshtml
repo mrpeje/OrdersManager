@@ -1,6 +1,6 @@
 ﻿@{
-    ViewData["Title"] = "List of orders";
-    var headers = new List<(string propertyName, string colName)> { ("Number", "Number"), ("Date", "Date"), ("ProviderId", "ProviderId") }; 
+    var headers = new List<string> { "Номер", "Дата","Провайдер" };
+    ViewData["Title"] = "Список заказов";
     var data = new List<OrderModel>();
 }
 
@@ -14,7 +14,7 @@
         <input id="1" name=dateStart type="date" value=@ViewBag.dateStart />
         <label> - </label>     
         <input id="2" name="dateEnd" type="date" value=@ViewBag.dateEnd />
-         @if(@Model != null)
+        @if(@Model != null)
         {                
             <label>Number filter</label> 
             <select  asp-for="NumberList" asp-items="@Model.NumberList" name="NumberFilter" size=3 > select </select>
@@ -32,26 +32,22 @@
     <div class="grid-container">
           @foreach(var item in headers)
         {
-            <div  class="th">@item.colName</div>    
+            <div  class="th">@item</div>    
         }
-        @foreach(var item in Model.Orders)
+        @if (@Model != null)
         {
+            @foreach (var item in Model.Orders)
+            {
 
-            <a asp-action="ViewOrder" asp-route-id="@item.Id" style="display: contents; color:black;">
-                <div class="td">@item.Number</div> 
-                <div class="td">@item.Date</div> 
-                <div class="td">@item.ProviderId</div>
-            </a>
+                <a asp-action="ViewOrder" asp-route-id="@item.Id" style="display: contents; color:black;">
+                    <div class="td">@item.Number</div> 
+                    <div class="td">@item.Date</div> 
+                    <div class="td">@item.ProviderId</div>
+                </a>
+            }
         }
     </div>
 </div>
-@*@if(Model != null)
-{
-    @ListHelper.Table(Html, Model.Orders, headers)
-}
-else
-{
-    @ListHelper.Table(Html, data, headers)   
-}*@
+
 
 
