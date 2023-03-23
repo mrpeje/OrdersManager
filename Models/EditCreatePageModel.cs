@@ -14,6 +14,7 @@ namespace OrdersManager.Models
             Order = order;
             OrderItems = items;
         }
+        public List<ProviderModel> Providers { get; set; }
         public OrderModel Order { get; set; }
 
         public List<OrderItemModel>? OrderItems { get; set; }

@@ -47,14 +47,7 @@ tr:nth-child(even) {
     padding: 8px;
 }
 
-select {
-    font-size: 12px !important;
-    text-overflow: ellipsis;
-}
 
-    select option {
-        font-size: 12px;
-    }
 
 .grid-container {
     display: grid;

@@ -11,11 +11,21 @@
 
     if(Model.OrderItems == null)
         Model.OrderItems  = new List<OrderItemModel>();
-    
+
     Model.NewOrderItem = new OrderItemModel();
     Model.NewOrderItem.Order = Model.Order;
 
-    var partialView = await Component.InvokeAsync("DataTransferView", Model);    
+    var partialView = await Component.InvokeAsync("DataTransferView", Model);
+    List<SelectListItem> providerListSelect = new List<SelectListItem>();
+    providerListSelect = Model.Providers.ConvertAll(a =>
+    {
+        return new SelectListItem()
+        {
+            Text = a.Name.ToString(),
+            Value = a.Id.ToString(),
+            Selected = false
+        };
+    });
         
 }
 <h1>@ViewData["Title"]</h1>
@@ -24,26 +34,43 @@
 @using Microsoft.AspNetCore.Html
 
 
-<div>
-    </div>
-    @using(Html.BeginForm("ProcessFormOrderCreateEdit", "OrdersManager", FormMethod.Post))
-    {
-        @Html.EditorFor(m => Model.Order)
-        @Html.ValidationMessageFor(x => Model.Order)
-        <p><input name="SaveOrder" type="submit" value="Сохранить заказ" class="save-button" /></p>
 
-        @Html.EditorFor(m => Model.NewOrderItem)
-        @for (int i = 0; i < Model.OrderItems.Count; i++)
-        {
+@using(Html.BeginForm("ProcessFormOrderCreateEdit", "OrdersManager", FormMethod.Post))
+{
+    <div>
+         @Html.EditorFor(m => Model.Order.Number)
+    </div>
+    <div>
+        @Html.EditorFor(m => Model.Order.Date) 
+    </div>
+    <div>
+        <select asp-for="@Model.Order.ProviderId" name="Provider" class="form-control" asp-items="@providerListSelect"></select>
+    </div>        
+    @Html.HiddenFor(m => Model.Order.Id)
+    @Html.HiddenFor(m => Model.Order.ProviderId)
+    
+    @Html.ValidationMessageFor(x => Model.Order)
+    <p><input name="SaveOrder" type="submit" value="Сохранить заказ" class="save-button" /></p>
+
+    @Html.EditorFor(m => Model.NewOrderItem)
+    @Html.ValidationMessageFor(x => Model.NewOrderItem)
+    <p><input name="AddOrderItem" type="submit" value="Добавить предмет в заказ" class="add-button"/></p>
+    @for (int i = 0; i < Model.OrderItems.Count; i++)
+    {
+        <div class="td">
             @Html.HiddenFor((m => Model.OrderItems[i].id))
             @Html.HiddenFor((m => Model.OrderItems[i].OrderId)) 
-            @Html.HiddenFor((m => Model.OrderItems[i].Name)) 
-            @Html.HiddenFor((m => Model.OrderItems[i].Quantity)) 
-            @Html.HiddenFor((m => Model.OrderItems[i].Unit)) 
-        }
-        @Html.ValidationMessageFor(x => Model.NewOrderItem)
-        <p><input name="AddOrderItem" type="submit" value="Добавить предмет в заказ" class="add-button"/></p>
+            @Html.EditorFor((m => Model.OrderItems[i].Name)) 
+            @Html.EditorFor((m => Model.OrderItems[i].Quantity)) 
+            @Html.EditorFor((m => Model.OrderItems[i].Unit))
+            <input name="itemId" type="hidden" value="@i"/>
+            <input name="deleteItem" type="submit" value="Удалить предмет"  class="delete-button"/>
+        </div>
+    }
+    @for (int i = 0; i < Model.Providers.Count; i++)
+    {
+        @Html.HiddenFor((m => Model.Providers[i].Id))
+        @Html.HiddenFor((m => Model.Providers[i].Name))     
     }
 
-
-@ListHelper.Table(Html, Model.OrderItems, headers, partialView) 
+}

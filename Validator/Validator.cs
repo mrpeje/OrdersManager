@@ -16,7 +16,8 @@ namespace OrdersManager.Validator
             });
             RuleSet("Order", () =>
             {
-                RuleFor(m => m.Order).MustAsync((order, cancellation) => ValidateOrderNumberAsync(order)).WithMessage("Заказ с таким номером уже существует для указанного провайдера");
+                RuleFor(m => m.Order).MustAsync((order, cancellation) => ValidateOrderNumberAsync(order))
+                .WithMessage(e=>$"Заказ с номером:{e.Order.Number} уже существует для провайдера {e.Providers.FirstOrDefault(x=>x.Id == e.Order.ProviderId).Name}");
             });
         }
         private async Task<bool> ValidateOrderNumberAsync(OrderModel order)

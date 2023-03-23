@@ -115,34 +115,44 @@ namespace OrdersManager.Controllers
         {
             if (model == null)
                 model = new EditCreatePageModel(new OrderModel(), new List<OrderItemModel>());
+
+            var uri = @"https://localhost:7063/api/Orders/Providers";
+            GetResponse request = new GetResponse();
+            var responseString = await request.Get(uri);
+
+            var providers = JsonConvert.DeserializeObject<List<ProviderModel>>(responseString);
+            model.Providers = providers;
+
             return View(model);
         }
 
 
         [HttpPost]
-        public async Task<IActionResult> ProcessFormOrderCreateEdit(EditCreatePageModel model, string? saveOrder, string? addOrderItem)
+        public async Task<IActionResult> ProcessFormOrderCreateEdit(EditCreatePageModel model, string? saveOrder, string? addOrderItem, string? deleteItem, int itemId, int Provider)
         {
+            model.Order.ProviderId = Provider;
             if (saveOrder != null)
-            {
-                
+            {               
                 return await OrderSave(model);
             }                        
             if (addOrderItem != null)
             {
                 return AddOrderItem(model, model.NewOrderItem);
-            }           
+            }
+            if (deleteItem != null)
+            {
+                return DeleteOrderItem(model, itemId);
+            }
             return View("OrderCreateEdit", model);
         }
 
         // Remove OrderItem 
-        [HttpPost]
         public IActionResult DeleteOrderItem(EditCreatePageModel model, int id)
         {
-            if (ModelState.IsValid)
-            {
-                model.OrderItems.Remove(model.OrderItems[id]);
-                ModelState.Clear();
-            }
+
+            model.OrderItems.Remove(model.OrderItems[id]);
+            ModelState.Clear();
+
             return View("OrderCreateEdit", model);
         }
 
@@ -153,6 +163,7 @@ namespace OrdersManager.Controllers
             ModelState.ClearValidationState("NewOrderItem.Unit");
             ModelState.MarkFieldValid("NewOrderItem.Unit");
             ModelState.MarkFieldValid("NewOrderItem.Name");
+
             var resultValidation = await _validator.ValidateAsync(model, options => options.IncludeRuleSets("Order"));
             resultValidation.AddToModelState(this.ModelState);
 
@@ -178,9 +189,7 @@ namespace OrdersManager.Controllers
         // Add order item
         private IActionResult AddOrderItem(EditCreatePageModel model, OrderItemModel newItem)
         {
-            var resultValidation = _validator.Validate(model, options => options.IncludeRuleSets("OrderItems"));
-            
-            //ModelState.ClearValidationState("Order");
+            var resultValidation = _validator.Validate(model, options => options.IncludeRuleSets("OrderItems"));            
             if (ModelState.IsValid && resultValidation.IsValid)
             {
                 if (model.OrderItems == null)
@@ -230,6 +239,13 @@ namespace OrdersManager.Controllers
                 var responseString = await request.Get(uri);
 
                 var model = JsonConvert.DeserializeObject<EditCreatePageModel>(responseString);
+
+                uri = @"https://localhost:7063/api/Orders/Providers";
+                responseString = await request.Get(uri);
+
+                var providers = JsonConvert.DeserializeObject<List<ProviderModel>>(responseString);
+                model.Providers = providers;
+                ModelState.Clear();
                 return View("OrderCreateEdit", model);
             }
             return View("Index");
