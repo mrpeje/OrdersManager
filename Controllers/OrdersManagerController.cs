@@ -88,6 +88,9 @@ namespace OrdersManager.Controllers
                 providerList.Add(b.ProviderId);
                 numberList.Add(b.Number);
             }
+            providerList = providerList.Distinct().ToList();
+            numberList = numberList.Distinct().ToList();
+
             List<SelectListItem> numberListSelect = numberList.ConvertAll(a =>
             {
                 return new SelectListItem()
