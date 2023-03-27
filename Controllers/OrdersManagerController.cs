@@ -3,6 +3,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
+using OrdersManager.Business_layer;
 using OrdersManager.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
@@ -15,9 +16,11 @@ namespace OrdersManager.Controllers
     {
         
         private IValidator<EditCreatePageModel> _validator;
-        public OrdersManagerController(IValidator<EditCreatePageModel> validator)
+        private IOrderManagerService _orderService;
+        public OrdersManagerController(IValidator<EditCreatePageModel> validator, IOrderManagerService orderService)
         {
             _validator = validator;
+            _orderService = orderService;
         }
 
         // Orders overview page
@@ -89,18 +92,10 @@ namespace OrdersManager.Controllers
         // Init IndexPageModel
         IndexPageModel NewPageModel(List<OrderModel> orders)
         {
-            var a = orders.GroupBy(x => new { x.ProviderId, x.Number }).Select(x => x.First());
-            var providerList = new List<int>();
-            var numberList = new List<string>();
-            foreach (var b in a)
-            {
-                providerList.Add(b.ProviderId);
-                numberList.Add(b.Number);
-            }
-            providerList = providerList.Distinct().ToList();
-            numberList = numberList.Distinct().ToList();
 
-            List<SelectListItem> numberListSelect = numberList.ConvertAll(a =>
+            var a = orders.GroupBy(x => new { x.ProviderId, x.Number }).Select(x => x.First());
+            var ordersFilters = _orderService.FilterIndexPage(a);
+            List<SelectListItem> numberListSelect = ordersFilters.NumberList.ConvertAll(a =>
             {
                 return new SelectListItem()
                 {
@@ -109,7 +104,7 @@ namespace OrdersManager.Controllers
                     Selected = false
                 };
             });
-            List<SelectListItem> providerListSelect = providerList.ConvertAll(a =>
+            List<SelectListItem> providerListSelect = ordersFilters.ProviderList.ConvertAll(a =>
             {
                 return new SelectListItem()
                 {

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using OrdersManager.Business_layer;
 using OrdersManager.Models;
 using OrdersManager.Validator;
 
@@ -9,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IValidator<EditCreatePageModel>, OrderValidator>();
+builder.Services.AddScoped<IOrderManagerService, OrderManagerService>();
 
 
 var app = builder.Build();
