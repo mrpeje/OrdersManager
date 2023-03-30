@@ -15,11 +15,9 @@ namespace OrdersManager.Controllers
     public class OrdersManagerController : Controller
     {
         
-        private IValidator<EditCreatePageModel> _validator;
         private IOrderManagerService _orderService;
-        public OrdersManagerController(IValidator<EditCreatePageModel> validator, IOrderManagerService orderService)
+        public OrdersManagerController(IOrderManagerService orderService)
         {
-            _validator = validator;
             _orderService = orderService;
         }
 
@@ -144,12 +142,39 @@ namespace OrdersManager.Controllers
         {
             model.Order.ProviderId = Provider;
             if (saveOrder != null)
-            {               
-                return await OrderSave(model);
+            {
+                ModelState.ClearValidationState("NewOrderItem.Name");
+                ModelState.ClearValidationState("NewOrderItem.Unit");
+                ModelState.MarkFieldValid("NewOrderItem.Unit");
+                ModelState.MarkFieldValid("NewOrderItem.Name");
+                if (ModelState.IsValid)
+                {
+                    ModelState.Clear();
+                    // Try save order
+                    var saveResult = await _orderService.SaveOrder(model);
+
+                    if (saveResult.IsSuccessful)
+                    {
+                        ModelState.Clear();
+                        return RedirectToAction("Index");
+                    }
+                    if(saveResult.ValidationsErrors.Count > 0)
+                    {
+                        foreach(var error in saveResult.ValidationsErrors)
+                        {
+                            error.AddToModelState(this.ModelState);
+                        }                       
+                    }
+                    if(!string.IsNullOrEmpty(saveResult.ErrorCode))
+                    {
+                        ViewBag.ErrorMsg = saveResult.ErrorMessage;                        
+                    }
+                    return View("OrderCreateEdit", model);
+                }
             }                        
             if (addOrderItem != null)
             {
-                return AddOrderItem(model, model.NewOrderItem);
+                return AddOrderItem(model);
             }
             if (deleteItem != null)
             {
@@ -161,61 +186,22 @@ namespace OrdersManager.Controllers
         // Remove OrderItem 
         public IActionResult DeleteOrderItem(EditCreatePageModel model, int id)
         {
-
             model.OrderItems.Remove(model.OrderItems[id]);
             ModelState.Clear();
 
             return View("OrderCreateEdit", model);
         }
 
-        // Save order
-        private async Task<IActionResult> OrderSave(EditCreatePageModel model)
-        {
-            ModelState.ClearValidationState("NewOrderItem.Name");
-            ModelState.ClearValidationState("NewOrderItem.Unit");
-            ModelState.MarkFieldValid("NewOrderItem.Unit");
-            ModelState.MarkFieldValid("NewOrderItem.Name");
-
-            var resultValidation = await _validator.ValidateAsync(model, options => options.IncludeRuleSets("Order"));
-            var resultValidation2 = _validator.Validate(model, options => options.IncludeRuleSets("OrderItems"));
-            resultValidation.AddToModelState(this.ModelState);
-            resultValidation2.AddToModelState(this.ModelState);
-
-            if (ModelState.IsValid)
-            {
-                // construct API request link
-                var uri = Orders.CreateEditOrder;
-                
-                GetResponse request = new GetResponse();
-                var serializedData = JsonConvert.SerializeObject(model);
-
-                var response = await request.Post(uri, serializedData);
-                var status = response.StatusCode;
-                if (status == HttpStatusCode.OK)
-                {
-                    ModelState.Clear();
-                    return RedirectToAction("Index");
-                }
-                else
-                {
-                    
-                }
-            }
-            ViewBag.ErrorMsg = "Не удалось сохранить заказ";
-            return View("OrderCreateEdit", model);
-
-        }
-
         // Add order item
-        private IActionResult AddOrderItem(EditCreatePageModel model, OrderItemModel newItem)
+        private IActionResult AddOrderItem(EditCreatePageModel model)
         {
-            var resultValidation = _validator.Validate(model, options => options.IncludeRuleSets("OrderItems"));            
+            var resultValidation = _orderService.ValidateOrderItems(model);            
             if (ModelState.IsValid && resultValidation.IsValid)
             {
                 if (model.OrderItems == null)
                     model.OrderItems = new List<OrderItemModel>();
-                newItem.Order = model.Order;
-                model.OrderItems.Add(newItem);
+                model.NewOrderItem.Order = model.Order;
+                model.OrderItems.Add(model.NewOrderItem);
 
                 ModelState.Clear();
             }
