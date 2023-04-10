@@ -44,7 +44,7 @@ namespace OrdersManager.Validator
         private async Task<bool> ValidateOrderNumberAsync(OrderModel order)
         {
             GetResponse request = new GetResponse();
-            var uri = Orders.Providers;
+            var uri = OrderManager.Providers;
 
             var responseString = await request.Get(uri);
             if (!string.IsNullOrEmpty(responseString))

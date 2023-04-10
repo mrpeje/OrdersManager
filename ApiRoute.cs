@@ -20,7 +20,7 @@
         /// <summary>
         /// Static class that contains Orders API endpoint routes.
         /// </summary>
-        public static class Orders
+        public static class OrderManager
         {
             /// <summary>
             /// ip address + port for API
@@ -29,7 +29,7 @@
             /// <summary>
             /// Base controller route.
             /// </summary>
-            private const string Controller = $"{_apiAddress}{Base}{nameof(Orders)}{Slash}";
+            private const string Controller = $"{_apiAddress}{Base}{nameof(OrderManager)}{Slash}";
 
             public const string AllOrders = Controller;
             /// <summary>
@@ -51,6 +51,16 @@
             /// Provider by id
             /// </summary>
             public const string Provider = $"{Providers}{nameof(Provider)}{Slash}";
+
+            /// <summary>
+            /// OrderItems by Order id
+            /// </summary>
+            public const string Items = $"{Order}{nameof(Items)}{Slash}";
+
+            /// <summary>
+            /// OrderItem by Order id
+            /// </summary>
+            public const string Item = $"{Order}{nameof(Item)}{Slash}";
 
         }
     }

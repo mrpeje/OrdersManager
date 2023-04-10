@@ -38,42 +38,34 @@ namespace OrdersManager.Business_layer
         }
         public async Task<SaveResult> SaveOrder(EditCreatePageModel model)
         {
-            var saveResult = new SaveResult();
+            var resultValidationOrder = await ValidateOrder(model);
+            var resultValidationOrderItems =  ValidateOrderItems(model);
             var validationErrors = new List<ValidationResult>();
 
-            var resultValidationOrder = await ValidateOrder(model);
-
-            var resultValidationOrderItems =  ValidateOrderItems(model);
-
+            SaveResult saveResult;
 
             if (resultValidationOrder.IsValid && resultValidationOrderItems.IsValid)
             {
-                // construct API request link
-                var uri = Orders.CreateEditOrder;
-
-                GetResponse request = new GetResponse();
-                var serializedData = JsonConvert.SerializeObject(model);
-
-                var response = await request.Post(uri, serializedData);
-                var statusCode = response.StatusCode;
-                if (statusCode == HttpStatusCode.OK)
+                saveResult = await UpdateOrderItems(model);
+                
+                if (saveResult.IsSuccessful)
                 {
-                    saveResult.IsSuccessful = true;
 
                 }
                 else
                 {
-                    saveResult.IsSuccessful = false;
-                    saveResult.ErrorMessage = "Ошибка при сохранении заказа";
-                    saveResult.ErrorCode = statusCode.ToString();
+
                 }
             }
             else
             {
+                saveResult = new SaveResult();
+                saveResult.IsSuccessful = false;
                 validationErrors.Add(resultValidationOrder);
                 validationErrors.Add(resultValidationOrderItems);
+                saveResult.ValidationsErrors = validationErrors;
             }
-            saveResult.ValidationsErrors = validationErrors;
+           
             return saveResult;
         }
         public ValidationResult ValidateOrderItems(EditCreatePageModel model)
@@ -83,6 +75,93 @@ namespace OrdersManager.Business_layer
         public async Task<ValidationResult> ValidateOrder(EditCreatePageModel model)
         {
             return await _validator.ValidateAsync(model, options => options.IncludeRuleSets("Order"));
+        }
+        async Task<SaveResult> UpdateOrderItems(EditCreatePageModel dataModel)
+        {
+            var result = new SaveResult();
+            try
+            {
+                GetResponse request = new GetResponse();
+                // construct API request link
+                var uri = OrderManager.Items;
+                var responseString = await request.Get(uri + dataModel.Order.Id);
+                var orderItems = JsonConvert.DeserializeObject<List<OrderItemModel>>(responseString);
+
+                if (dataModel.OrderItems != null)
+                {
+                    // construct API request link
+                    var itemUri = OrderManager.Item;
+                    // Update or Add OrderItems
+                    foreach (var item in dataModel.OrderItems)
+                    {
+                        GetResponse requestitem = new GetResponse();
+                        var JsonItem = JsonConvert.SerializeObject(item);
+                        if (item.id != 0)
+                        { 
+                            var response = await requestitem.Put(itemUri, JsonItem);
+                            var status = response.StatusCode;
+                            if (status != HttpStatusCode.OK)
+                            {
+
+                            }
+                        }
+                        else
+                        {
+                            var response = await requestitem.Post(itemUri + dataModel.Order.Id, JsonItem);
+                            var status = response.StatusCode;
+                            if (status != HttpStatusCode.OK)
+                            {
+
+                            }
+                        }
+                    }
+                    foreach (var item in dataModel.OrderItems)
+                    {
+                        item.Order = dataModel.Order;
+                    }
+                    // Delete OrderItems                  
+                     
+                    var deletedItems = orderItems.Where(userItem => dataModel.OrderItems.All(dbItem => userItem.id != dbItem.id)).ToList();
+                    foreach (var item in deletedItems)
+                    {
+                        GetResponse requestDelete = new GetResponse();
+                        // construct API request link
+                        var deleteItemUri = OrderManager.Item;
+
+                        var response = await requestDelete.Delete(deleteItemUri, item.id);
+                        var status = response.StatusCode;
+                        if (status != HttpStatusCode.OK)
+                        {
+
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var item in orderItems)
+                    {
+                        GetResponse requestDelete = new GetResponse();
+                        // construct API request link
+                        var deleteItemUri = OrderManager.Item;
+
+                        var response = await requestDelete.Delete(deleteItemUri, item.id);
+                        var status = response.StatusCode;
+                        if (status != HttpStatusCode.OK)
+                        {
+
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                result.IsSuccessful = false;
+                result.ErrorMessage = "Ошибка при сохранении заказа";
+                return result;
+            }
+            result.IsSuccessful = true;
+            return result;
         }
     }
 }

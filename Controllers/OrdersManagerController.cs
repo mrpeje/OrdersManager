@@ -35,7 +35,7 @@ namespace OrdersManager.Controllers
             try
             {
                 // construct API request link
-                var uri = Orders.AllOrders;
+                var uri = OrderManager.AllOrders;
 
                 GetResponse request = new GetResponse();
                 var responseString = await request.Get(uri);
@@ -68,7 +68,7 @@ namespace OrdersManager.Controllers
             var result = new List<OrderModel>();
 
             // construct API request link
-            var uri = Orders.AllOrders;
+            var uri = OrderManager.AllOrders;
 
             GetResponse request = new GetResponse();
             var responseString = await request.Get(uri);
@@ -122,7 +122,7 @@ namespace OrdersManager.Controllers
                 model = new EditCreatePageModel(new OrderModel(), new List<OrderItemModel>());
 
             // construct API request link
-            var uri = Orders.Providers;
+            var uri = OrderManager.Providers;
 
             GetResponse request = new GetResponse();
             var responseString = await request.Get(uri);
@@ -213,7 +213,7 @@ namespace OrdersManager.Controllers
         public async Task<IActionResult> ViewOrder(int id)
         {
             // construct API request link
-            var uri = Orders.Order;
+            var uri = OrderManager.Order;
             
             GetResponse request = new GetResponse();
             var responseString = await request.Get(uri + id);
@@ -239,7 +239,7 @@ namespace OrdersManager.Controllers
                 {
                     GetResponse request = new GetResponse();
 
-                    var uri = Orders.Order;                  
+                    var uri = OrderManager.Order;                  
 
                     var response = await request.Delete(uri, id);
                     var status = response.StatusCode;
@@ -259,7 +259,7 @@ namespace OrdersManager.Controllers
             }
             if (EditOrder != null)
             {
-                var uri = Orders.Order;
+                var uri = OrderManager.Order;
                 //var uri = @"https://localhost:7063/api/Orders/Order" + id;
                 GetResponse request = new GetResponse();
                 var responseString = await request.Get(uri+ id);
@@ -268,7 +268,7 @@ namespace OrdersManager.Controllers
                     var model = JsonConvert.DeserializeObject<EditCreatePageModel>(responseString);
                     responseString = null;
 
-                    uri = Orders.Providers;
+                    uri = OrderManager.Providers;
 
                     responseString = await request.Get(uri);
                     if (!string.IsNullOrEmpty(responseString))

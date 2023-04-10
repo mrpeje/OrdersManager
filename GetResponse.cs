@@ -69,5 +69,25 @@ namespace OrdersManager
                 return new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
             }
         }
+        public async Task<HttpResponseMessage> Put(string uri, string putString)
+        {
+            try
+            {
+                HttpClient client = new HttpClient();
+                var content = new StringContent(putString, Encoding.UTF8, "application/json");
+                var response = await client.PutAsync(uri, content);
+                return response;
+            }
+            catch (HttpRequestException httpEception)
+            {
+                logger.Error(uri + httpEception.ToString());
+                return new HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Unknow error " + ex.ToString());
+                return new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
+            }
+        }
     }
 }
