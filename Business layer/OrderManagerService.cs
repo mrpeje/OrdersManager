@@ -42,24 +42,21 @@ namespace OrdersManager.Business_layer
             var resultValidationOrderItems =  ValidateOrderItems(model);
             var validationErrors = new List<ValidationResult>();
 
-            SaveResult saveResult;
+            SaveResult saveResult = new SaveResult();
 
             if (resultValidationOrder.IsValid && resultValidationOrderItems.IsValid)
             {
-                saveResult = await UpdateOrderItems(model);
+                saveResult.IsSuccessful = await UpdateOrder(model.Order);
+                if(saveResult.IsSuccessful)
+                    saveResult.IsSuccessful = await UpdateOrderItems(model.Order, model.OrderItems);
                 
-                if (saveResult.IsSuccessful)
+                if (!saveResult.IsSuccessful)
                 {
-
-                }
-                else
-                {
-
+                    saveResult.ErrorMessage = "Ошибка при сохранении заказа в БД";
                 }
             }
             else
             {
-                saveResult = new SaveResult();
                 saveResult.IsSuccessful = false;
                 validationErrors.Add(resultValidationOrder);
                 validationErrors.Add(resultValidationOrderItems);
@@ -76,23 +73,33 @@ namespace OrdersManager.Business_layer
         {
             return await _validator.ValidateAsync(model, options => options.IncludeRuleSets("Order"));
         }
-        async Task<SaveResult> UpdateOrderItems(EditCreatePageModel dataModel)
+        async Task<bool> UpdateOrder(OrderModel order)
         {
-            var result = new SaveResult();
+            GetResponse request = new GetResponse();
+            // construct API request link
+            var uri = OrderManager.Order;
+            var jsonOrder = JsonConvert.SerializeObject(order);
+            var responseString = await request.Put(uri, jsonOrder);
+            
+            return true;
+        }
+        async Task<bool> UpdateOrderItems(OrderModel order, List<OrderItemModel> userOrderItems)
+        {
             try
             {
                 GetResponse request = new GetResponse();
                 // construct API request link
                 var uri = OrderManager.Items;
-                var responseString = await request.Get(uri + dataModel.Order.Id);
-                var orderItems = JsonConvert.DeserializeObject<List<OrderItemModel>>(responseString);
+                // Get all items for this order
+                var responseString = await request.Get(uri + order.Id);
+                var dbOrderItems = JsonConvert.DeserializeObject<List<OrderItemModel>>(responseString);
 
-                if (dataModel.OrderItems != null)
+                if (userOrderItems != null)
                 {
                     // construct API request link
                     var itemUri = OrderManager.Item;
                     // Update or Add OrderItems
-                    foreach (var item in dataModel.OrderItems)
+                    foreach (var item in userOrderItems)
                     {
                         GetResponse requestitem = new GetResponse();
                         var JsonItem = JsonConvert.SerializeObject(item);
@@ -107,7 +114,7 @@ namespace OrdersManager.Business_layer
                         }
                         else
                         {
-                            var response = await requestitem.Post(itemUri + dataModel.Order.Id, JsonItem);
+                            var response = await requestitem.Post(itemUri + order.Id, JsonItem);
                             var status = response.StatusCode;
                             if (status != HttpStatusCode.OK)
                             {
@@ -115,13 +122,9 @@ namespace OrdersManager.Business_layer
                             }
                         }
                     }
-                    foreach (var item in dataModel.OrderItems)
-                    {
-                        item.Order = dataModel.Order;
-                    }
                     // Delete OrderItems                  
                      
-                    var deletedItems = orderItems.Where(userItem => dataModel.OrderItems.All(dbItem => userItem.id != dbItem.id)).ToList();
+                    var deletedItems = dbOrderItems.Where(dbItem => userOrderItems.All(userItem => dbItem.id != userItem.id)).ToList();
                     foreach (var item in deletedItems)
                     {
                         GetResponse requestDelete = new GetResponse();
@@ -136,9 +139,10 @@ namespace OrdersManager.Business_layer
                         }
                     }
                 }
+                // If userOrderItems empty - delete all OrderItems from DB 
                 else
                 {
-                    foreach (var item in orderItems)
+                    foreach (var item in dbOrderItems)
                     {
                         GetResponse requestDelete = new GetResponse();
                         // construct API request link
@@ -156,12 +160,10 @@ namespace OrdersManager.Business_layer
             catch (Exception ex)
             {
 
-                result.IsSuccessful = false;
-                result.ErrorMessage = "Ошибка при сохранении заказа";
-                return result;
+                return false;
             }
-            result.IsSuccessful = true;
-            return result;
+
+            return true;
         }
     }
 }
