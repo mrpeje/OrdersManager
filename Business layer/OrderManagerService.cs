@@ -47,7 +47,9 @@ namespace OrdersManager.Business_layer
             if (resultValidationOrder.IsValid && resultValidationOrderItems.IsValid)
             {
                 saveResult.IsSuccessful = await UpdateOrder(model.Order);
-                if(saveResult.IsSuccessful)
+                if (!saveResult.IsSuccessful)
+                    saveResult.IsSuccessful = await CreateOrder(model.Order);
+                if (saveResult.IsSuccessful)
                     saveResult.IsSuccessful = await UpdateOrderItems(model.Order, model.OrderItems);
                 
                 if (!saveResult.IsSuccessful)
@@ -73,14 +75,32 @@ namespace OrdersManager.Business_layer
         {
             return await _validator.ValidateAsync(model, options => options.IncludeRuleSets("Order"));
         }
+        async Task<bool> CreateOrder(OrderModel order)
+        {
+            GetResponse request = new GetResponse();
+            // construct API request link
+            var uri = OrderManager.Order;
+            var jsonOrder = JsonConvert.SerializeObject(order);
+            var response = await request.Post(uri, jsonOrder);
+            var status = response.StatusCode;
+            if (status != HttpStatusCode.OK)
+            {
+                return false;
+            }
+            return true;
+        }
         async Task<bool> UpdateOrder(OrderModel order)
         {
             GetResponse request = new GetResponse();
             // construct API request link
             var uri = OrderManager.Order;
             var jsonOrder = JsonConvert.SerializeObject(order);
-            var responseString = await request.Put(uri, jsonOrder);
-            
+            var response = await request.Put(uri, jsonOrder);
+            var status = response.StatusCode;
+            if (status != HttpStatusCode.OK)
+            {
+                return false;
+            }
             return true;
         }
         async Task<bool> UpdateOrderItems(OrderModel order, List<OrderItemModel> userOrderItems)
